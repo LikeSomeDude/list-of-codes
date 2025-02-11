@@ -4,6 +4,8 @@
 
 #include <iostream>
 #include <cassert>
+#include <sstream>
+#include <exception>
 
 using namespace std;
 
@@ -57,7 +59,148 @@ public:
 	}
 };
 
+template<class T, class U> 
+void AssertEqual(const T& t, const U& u, const string& hint) {
+	if (t != u) {
+		ostringstream os;
+		os  << "Assertion failed: " << t << " != " << u
+			<< " Hint: " << hint;
+		throw runtime_error(os.str());
+	}
+}
+
+
+void Assert(bool b, const string& hint) {
+	AssertEqual(b, true, hint);
+}
+
+void TestStackPush() {
+	{
+		Stack S(1);
+		S.push(1);
+		AssertEqual(S.top(), 1, "one element");
+	}
+
+	{
+		int n = 100;
+		Stack S(n);
+		for (int i = 1; i <= n; ++i) {
+			S.push(i);
+			AssertEqual(S.top(), i, "size != i");
+		}
+	}
+	//cout << "Test StackPush OK" << endl;
+}
+
+void TestStackSize() {
+	{
+		Stack S(1);
+		AssertEqual(S.size(), 0, "size must be zero");
+		S.push(1);
+		AssertEqual(S.size(), 1, "size must be one");
+	}
+
+	{
+		int n = 100;
+		Stack S(n);
+		for (int i = 1; i <= n; ++i) {
+			S.push(i);
+			AssertEqual(S.size(), i, "label zero");
+		}
+		AssertEqual(S.size(), n, "label 1");
+	}
+
+	//cout << "Test StackSize OK" << endl;
+}
+
+void TestStackEmpty() {
+	{
+		Stack S(10);
+		Assert(S.empty(), "must be empty");
+	}
+	//cout << "Test StackEmpty OK" << endl;
+}
+
+void TestStackPop() {
+	{
+		Stack S(1);
+		S.push(10);
+		S.pop();
+		AssertEqual(S.size(), 0, "S must be empty");
+		Assert(S.empty(), "must be empty");
+	}
+
+	{
+		int n = 100;
+		Stack S(n);
+		for (int i = 0; i < n; ++i) {
+			S.push(i+1);
+		}
+		for (int i = n; i >0 ; --i) {
+			AssertEqual(S.top(), i, "size must be i");
+			S.pop();
+			
+		}
+		Assert(S.empty(), "must be empty");
+		AssertEqual(S.size(), 0, "size = 0");
+
+	}
+	//cout << "Test StackPop OK" << endl;
+}
+
+void TestStackPushPop() {
+	int n = 100;
+	Stack S(n);
+	for(int i = 0; i < n; ++i) {
+		S.push(i);
+		AssertEqual(S.top(), i, "top must be i");
+		S.pop();
+		Assert(S.empty(), "must be empty");
+	}
+	//cout << "Test StackPushPop OK" << endl;
+}
+
+class TestRunner {
+private:
+	int fail_count = 0;
+public:
+	template<class TestFunc>
+	void RunTest(TestFunc func, const string& test_name) {
+		try {
+			func();
+			cerr << "Test " << test_name << " OK" << endl;
+		}
+		catch (runtime_error & e) {
+			cerr << "Test "<< test_name << " fail. " << e.what() << endl;
+			++fail_count;
+		}
+	}
+	~TestRunner() {
+		if (fail_count != 0) {
+			cerr << fail_count << " tests failed. Terminate";
+			exit(1);
+		}
+	}
+};
+
+
+void TestAll() {
+	TestRunner tr;
+	tr.RunTest(TestStackEmpty, "StackEmpty");
+	tr.RunTest(TestStackSize, "StackSize");
+	tr.RunTest(TestStackPop, "StackPop");
+	tr.RunTest(TestStackPush, "StackPush");
+	tr.RunTest(TestStackPushPop, "StackPushPop");
+	
+}
+
 int main() {
+//#ifndef NDEBUG
+//	TestAll();
+//#endif // !NDEBUG
+	TestAll();
+	
+
 	cout << "size: ";
 	int n;
 	cin >> n;
