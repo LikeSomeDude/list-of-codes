@@ -221,3 +221,79 @@ int main() {
     return 0;
 }
 
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+
+struct Event {
+    int time;
+    int type; // +1 for arrival, -1 for departure
+};
+
+bool compareEvents(const Event &a, const Event &b) {
+    if (a.time == b.time) {
+        return a.type < b.type; // Departure first if time is equal
+    }
+    return a.time < b.time;
+}
+
+int timeToMinutes(const std::string &time) {
+    int hh = std::stoi(time.substr(0, 2));
+    int mm = std::stoi(time.substr(3, 2));
+    return hh * 60 + mm;
+}
+
+std::string minutesToTime(int minutes) {
+    int hh = minutes / 60;
+    int mm = minutes % 60;
+    char buffer[6];
+    sprintf(buffer, "%02d:%02d", hh, mm);
+    return std::string(buffer);
+}
+
+int main(int argc, char *argv[]) {
+    if (argc < 2) {
+        std::cerr << "Usage: " << argv[0] << " <input_file>" << std::endl;
+        return 1;
+    }
+
+    std::ifstream inputFile(argv[1]);
+    if (!inputFile) {
+        std::cerr << "Error opening file" << std::endl;
+        return 1;
+    }
+
+    int N;
+    inputFile >> N;
+
+    Event events[2 * N];
+    int index = 0;
+
+    for (int i = 0; i < N; ++i) {
+        std::string arrival, departure;
+        inputFile >> arrival >> departure;
+        events[index++] = {timeToMinutes(arrival), 1};
+        events[index++] = {timeToMinutes(departure), -1};
+    }
+
+    std::sort(events, events + 2 * N, compareEvents);
+
+    int maxVisitors = 0;
+    int currentVisitors = 0;
+    int maxStartTime = 0;
+    int maxEndTime = 0;
+
+    for (int i = 0; i < 2 * N; ++i) {
+        currentVisitors += events[i].type;
+        if (currentVisitors > maxVisitors) {
+            maxVisitors = currentVisitors;
+            maxStartTime = events[i].time;
+            maxEndTime = events[i + 1].time;
+        }
+    }
+
+    std::cout << maxVisitors << " " << minutesToTime(maxStartTime) << " " << minutesToTime(maxEndTime) << std::endl;
+
+    return 0;
+}
+
