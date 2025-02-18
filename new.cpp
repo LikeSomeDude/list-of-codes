@@ -1,81 +1,92 @@
+// ConsoleApplication2.cpp: определяет точку входа для консольного приложения.
+//
+
+#include "stdafx.h"
+
+
 #include <iostream>
 #include <fstream>
-#include <algorithm>
 
-// Преобразуем время в минуты
+
+using namespace std;
+
 int timeToMinutes(const char* time) {
     int hh, mm;
-    sscanf(time, "%d:%d", &hh, &mm);
+    sscanf_s(time, "%d:%d", &hh, &mm);
     return hh * 60 + mm;
 }
 
-// Преобразуем минуты обратно в время
 void minutesToTime(int minutes, char* buffer) {
     int hh = minutes / 60;
     int mm = minutes % 60;
-    sprintf(buffer, "%02d:%02d", hh, mm);
+    sprintf_s(buffer, 6, "%02d:%02d", hh, mm);
 }
 
-int main(int argc, char* argv[]) {
-    if (argc < 2) {
-        std::cerr << "Usage: " << argv[0] << " <input_file>" << std::endl;
-        return 1;
+int main() {
+
+    ifstream inputFile("test.txt");
+    int count_vis;
+    inputFile >> count_vis;
+
+    const int hourInDay = 1440;
+
+    int mass[hourInDay] ={0};
+
+    for (int i = 0; i < count_vis; ++i) {
+        char arrival[6], left_buf[6];
+        inputFile >> arrival >> left_buf;
+        int arrive = timeToMinutes(arrival);
+        int left = timeToMinutes(left_buf);
+        for(int j = 0; j < hourInDay; j++) {
+            if (j >= arrive && left <= j) {
+                mass[j]++;
+            }
+        }
     }
 
-    std::ifstream inputFile(argv[1]);
-    if (!inputFile) {
-        std::cerr << "Error opening file" << std::endl;
-        return 1;
+    int max_vis = 0;
+    for (int i = 0; i < hourInDay; i++) {
+        if (mass[i] >= max_vis) {max_vis = mass[i];}
     }
 
-    int N;
-    inputFile >> N;
+    int maxStartTime = 0;
+    int maxEndTime = 0;
+    bool flag = false;
 
-    // Создаем массивы для времени прихода и ухода
-    int arrivals[N];
-    int departures[N];
+    for (int i = 0; i < hourInDay; i++) {
+        if ((mass[i] == max_vis) && !flag){maxStartTime = i; flag = true;}
+        else if((mass[i] != max_vis) && flag){maxEndTime = i; break;}
 
-    for (int i = 0; i < N; ++i) {
-        char arrival[6], departure[6];
-        inputFile >> arrival >> departure;
-        arrivals[i] = timeToMinutes(arrival);
-        departures[i] = timeToMinutes(departure);
     }
 
-    // Сортируем оба массива
-    std::sort(arrivals, arrivals + N);
-    std::sort(departures, departures + N);
-
-    int maxVisitors = 0;
-    int currentVisitors = 0;
+  /*  int max_vis = 0;
+    int cur_vis = 0;
     int maxStartTime = 0;
     int maxEndTime = 0;
 
     int i = 0, j = 0;
 
-    // Проходим по событиям и находим максимальное количество посетителей
-    while (i < N && j < N) {
-        if (arrivals[i] <= departures[j]) {
-            currentVisitors++;
-            if (currentVisitors > maxVisitors) {
-                maxVisitors = currentVisitors;
-                maxStartTime = arrivals[i];
-                maxEndTime = departures[j];
+    while (i < count_vis && j < count_vis) {
+        if (arrive[i] <= left[j]) {
+            cur_vis++;
+            if (cur_vis > max_vis) {
+                max_vis = cur_vis;
+                maxStartTime = arrive[i];
+                maxEndTime = left[j];
             }
             i++;
-        } else {
-            currentVisitors--;
+        }
+        else {
+            cur_vis--;
             j++;
         }
-    }
+    }*/
 
-    // Преобразуем время обратно в формат ЧЧ:ММ
     char startTime[6], endTime[6];
     minutesToTime(maxStartTime, startTime);
     minutesToTime(maxEndTime, endTime);
 
-    // Выводим результат
-    std::cout << maxVisitors << " " << startTime << " " << endTime << std::endl;
+    cout << max_vis << " " << startTime << " " << endTime;
 
     return 0;
 }
